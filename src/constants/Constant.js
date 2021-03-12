@@ -1,0 +1,1 @@
+export const MAP_BOX_TOKEN = 'pk.eyJ1IjoibHp1Z2FqIiwiYSI6ImNrbHpnbGhvMjFraW0ybnBsdzR3OXN6bDAifQ.dBuHMH1r6dH22MsrXrCRUQ'; //"sk.eyJ1IjoibHp1Z2FqIiwiYSI6ImNrbHplbXo4azFqdHQydnBsN28wd2Vkb3gifQ.CeREqUZjPVh0vk0grHWBXQ";
