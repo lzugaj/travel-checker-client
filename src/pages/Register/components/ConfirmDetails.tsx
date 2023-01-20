@@ -1,10 +1,10 @@
 import React from "react";
 import Container from "../../../components/Container";
-import {User} from "../types";
+import { AuthorizationDto } from "../../../dto/types";
 import InputField from "../../../components/InputField";
 
 type ConfirmDetailProps = {
-    values: User;
+    values: AuthorizationDto;
 }
 
 export default function ConfirmDetails({ values }: ConfirmDetailProps) {
@@ -14,22 +14,22 @@ export default function ConfirmDetails({ values }: ConfirmDetailProps) {
                 name="firstName"
                 label="First name"
                 type="text"
-                value={values.firstName}
-                disabled={true}
+                value={ values.firstName }
+                disabled={ true }
             />
             <InputField
                 name="lastName"
                 label="Last name"
                 type="text"
-                value={values.lastName}
-                disabled={true}
+                value={ values.lastName }
+                disabled={ true }
             />
             <InputField
                 name="email"
                 label="Email"
                 type="email"
-                value={values.email}
-                disabled={true}
+                value={ values.email }
+                disabled={ true }
             />
         </Container>
     );

@@ -1,57 +1,46 @@
-import React, {useState} from "react";
-import {Formik, FormikErrors, FormikProps} from "formik";
-import {useNavigate} from "react-router-dom";
-import * as Yup from 'yup';
-
-import Container from "../../components/Container";
-import Title from "../../components/Title";
-import UserDetails from "./components/UserDetails";
-import PersonalDetails from "./components/PersonalDetails";
-import ConfirmDetails from "./components/ConfirmDetails";
-import TextField from "../../components/TextField";
-
+import { Formik, FormikErrors, FormikProps } from "formik";
+import React, { useState } from "react";
 import { Stepper } from 'react-form-stepper';
 
-import {User} from "./types";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
-const UserDetailsValidationSchema = Yup.object().shape({
-    email: Yup.string().required("Email is required")
-        .trim()
-        .matches(
-            /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@(([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})$/i,
-            "Email must be in valid form, for example: john.doe@gmail.com",
-        ),
-    password: Yup.string().required("Password is required")
-        .trim()
-        .matches(
-            /^.*(?=.{8,})((?=.*[!@#$%^&*()\-_=+{};:,<.>]))(?=.*\d)((?=.*[a-z]))((?=.*[A-Z])).*$/,
-            "Password must contain at least 8 characters, one uppercase, one number and one special case character",
-        ),
-    confirmationPassword: Yup.string().required("Password is required")
-        .trim()
-        .matches(
-            /^.*(?=.{8,})((?=.*[!@#$%^&*()\-_=+{};:,<.>]))(?=.*\d)((?=.*[a-z]))((?=.*[A-Z])).*$/,
-            "Password must contain at least 8 characters, one uppercase, one number and one special case character",
-        ),
-});
+import { ToastContainer } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
 
-const PersonalDetailsValidationSchema = Yup.object().shape({
-    firstName: Yup.string().required("First name is required")
-        .trim()
-        .min(2, "First name must contains at least 2 characters"),
-    lastName: Yup.string().required("Last name is required")
-        .trim()
-        .min(2, "Last name must contains at least 2 characters"),
-});
+import { authentication } from "../../api/authentication";
 
-const ValidationSchema = [UserDetailsValidationSchema, PersonalDetailsValidationSchema];
-const steps = ["User Details", "Person Details", "Confirm Details"]
+import Container from "../../components/Container";
+import Loader from "../../components/Loader";
+import TextField from "../../components/TextField";
+import Title from "../../components/Title";
+import { AuthenticationDto, AuthorizationDto } from "../../dto/types";
+import {
+    PersonalDetailsValidationSchema,
+    UserDetailsValidationSchema
+} from "../../validations/authenticationValidation";
+import ConfirmDetails from "./components/ConfirmDetails";
+import PersonalDetails from "./components/PersonalDetails";
+import UserDetails from "./components/UserDetails";
+
+import * as selectors from "./Register.selectors";
+import { registerUser } from "./Register.slice";
+
+type Form = AuthorizationDto;
+
+const ValidationSchema = [ UserDetailsValidationSchema, PersonalDetailsValidationSchema ];
+const steps = [ "User Details", "Person Details", "Confirm Details" ];
 
 export default function Register() {
     const navigate = useNavigate();
-    const [step, setStep] = useState(0);
+    const dispatch = useDispatch();
+    const status = useSelector(selectors.status);
+    const error = useSelector(selectors.error);
+
+    const [ loading, setLoading ] = useState(false);
+    const [ step, setStep ] = useState(0);
     const isLast = step === steps.length - 1;
-    const [user, setUser] = useState<User>({
+    const [ user, setUser ] = useState<AuthorizationDto>({
         confirmationPassword: "",
         email: "",
         firstName: "",
@@ -59,46 +48,31 @@ export default function Register() {
         password: "",
     });
 
-    const handleSubmit = async () => {
+    React.useEffect(() => {
+        if (status === "succeeded" && !error?.message) {
+            setLoading(true);
+            setTimeout(() => handleAuthentication(user), 3000);
+        }
+    }, [])
+
+    const handleSubmit = async (values: AuthorizationDto) => {
         if (isLast) {
-            console.log(user);
-            fetch("/api/v1/travel-checker/authorization", {
-                method: "POST",
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(user),
-            })
-                .then((response) => {
-                    console.log(response);
-                    if (response.ok) {
-                        fetch("/api/v1/travel-checker/authentication", {
-                            method: "POST",
-                            headers: {
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                "email": user.email,
-                                "password": user.password,
-                            }),
-                        })
-                            .then((response) => {
-                                console.log(response);
-                                if (response.ok) {
-                                    navigate("/");
-                                }
-                            })
-                            .catch((error) => console.log(error));
-                    }
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
+            dispatch(registerUser(values));
         } else {
             setStep((prevState) => prevState + 1);
         }
+    }
+
+    const handleAuthentication = (values: AuthorizationDto) => {
+        authentication({ "email": values.email, "password": values.password, } as AuthenticationDto)
+            .then((isOk: boolean) => {
+                if (isOk) {
+                    navigate("/");
+                }
+            })
+            .catch(error => console.log(error));
+
+        setLoading(false);
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,8 +82,8 @@ export default function Register() {
         }));
     }
 
-    const handlePasswordValidation = (values: User) => {
-        const errors = {} as FormikErrors<User>;
+    const handlePasswordValidation = (values: AuthorizationDto) => {
+        const errors = {} as FormikErrors<AuthorizationDto>;
         if (values.confirmationPassword !== values.password) {
             errors.confirmationPassword = "ResetPasswordConfirmation password does not matches with the password you provided.";
         }
@@ -122,21 +96,21 @@ export default function Register() {
             case 0:
                 return (
                     <UserDetails
-                        values={user}
-                        onChange={handleChange}
+                        values={ user }
+                        onChange={ handleChange }
                     />
                 );
             case 1:
                 return (
                     <PersonalDetails
-                        values={user}
-                        onChange={handleChange}
+                        values={ user }
+                        onChange={ handleChange }
                     />
                 );
             case 2:
                 return (
                     <ConfirmDetails
-                        values={user}
+                        values={ user }
                     />
                 );
         }
@@ -144,76 +118,78 @@ export default function Register() {
 
     return (
         <Container>
-            <Title label="Sign Up"/>
-
-            <Stepper
-                steps={[
-                    { label: 'User Details' },
-                    { label: 'Personal Details' },
-                    { label: 'Confirm Details' }
-                ]}
-                activeStep={step}
-                styleConfig={{
-                    activeBgColor: "#1043B2",
-                    activeTextColor: "#ffffff",
-                    completedBgColor: "#0e265b",
-                    completedTextColor: "#ffffff",
-                    inactiveBgColor: "#3B3A3AFF",
-                    inactiveTextColor: "#ffffff",
-                    size: "2em",
-                    circleFontSize: "1em",
-                    labelFontSize: "0.875rem",
-                    borderRadius: "50%",
-                    fontWeight: "500"
-                }}
-            />
-
-            <Formik
-                initialValues={{
-                    confirmationPassword: "",
-                    email: "",
-                    firstName: "",
-                    lastName: "",
-                    password: "",
-                } as User}
-                validationSchema={ValidationSchema[step]}
-                validate={handlePasswordValidation}
-                onSubmit={handleSubmit}
-            >
-                {({handleSubmit, handleChange, isSubmitting}: FormikProps<any>) => (
-                    <form onSubmit={handleSubmit} onChange={handleChange} autoComplete="off">
-                        {handleStepContent(step)}
-                        <div className="p-5 flex flex-wrap justify-center items-center gap-2">
-                            {
-                                step !== 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setStep(step - 1)}
-                                        className="flex items-center justify-between bg-blue-600 border border-blue-700 text-left text-white px-10 py-2 rounded shadow-md"
-                                    >
-                                        Back
-                                    </button>
-                                )
-                            }
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="flex items-center justify-between bg-blue-600 border border-blue-700 text-left text-white px-10 py-2 rounded shadow-md"
-                            >
-                                {isLast ? "Submit" : "Next"}
-                            </button>
-                        </div>
-                    </form>
-                )}
-            </Formik>
-            <TextField text="Already hava an account?">
-                <span
-                    onClick={() => navigate("/login")}
-                    className="text-blue-600"
+            <Loader loading={ loading } text="Signing up...">
+                <ToastContainer />
+                <Title label="Sign Up"/>
+                <Stepper
+                    steps={ [
+                        { label: 'User Details' },
+                        { label: 'Personal Details' },
+                        { label: 'Confirm Details' }
+                    ] }
+                    activeStep={ step }
+                    styleConfig={ {
+                        activeBgColor: "#1043B2",
+                        activeTextColor: "#ffffff",
+                        completedBgColor: "#0e265b",
+                        completedTextColor: "#ffffff",
+                        inactiveBgColor: "#3B3A3AFF",
+                        inactiveTextColor: "#ffffff",
+                        size: "2em",
+                        circleFontSize: "1em",
+                        labelFontSize: "0.875rem",
+                        borderRadius: "50%",
+                        fontWeight: "500"
+                    } }
+                />
+                <Formik
+                    initialValues={ {
+                        confirmationPassword: "",
+                        email: "",
+                        firstName: "",
+                        lastName: "",
+                        password: "",
+                    } as Form }
+                    validationSchema={ ValidationSchema[step] }
+                    validate={ handlePasswordValidation }
+                    onSubmit={ handleSubmit }
+                    validateOnBlur={ false }
                 >
-                    Sign In
-                </span>
-            </TextField>
+                    { ({ handleSubmit, handleChange, isSubmitting }: FormikProps<any>) => (
+                        <form onSubmit={ handleSubmit } onChange={ handleChange } autoComplete="off">
+                            { handleStepContent(step) }
+                            <div className="p-5 flex flex-wrap justify-center items-center gap-2">
+                                {
+                                    step !== 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={ () => setStep(step - 1) }
+                                            className="flex items-center justify-between bg-blue-600 border border-blue-700 text-left text-white px-10 py-2 rounded shadow-md"
+                                        >
+                                            Back
+                                        </button>
+                                    )
+                                }
+                                <button
+                                    type="submit"
+                                    disabled={ isSubmitting }
+                                    className="flex items-center justify-between bg-blue-600 border border-blue-700 text-left text-white px-10 py-2 rounded shadow-md"
+                                >
+                                    { isLast ? "Submit" : "Next" }
+                                </button>
+                            </div>
+                        </form>
+                    ) }
+                </Formik>
+                <TextField text="Already hava an account?">
+                    <span
+                        onClick={ () => navigate("/login") }
+                        className="text-blue-600"
+                    >
+                        Sign In
+                    </span>
+                </TextField>
+            </Loader>
         </Container>
     );
 }

@@ -1,8 +1,8 @@
-import {combineReducers} from "@reduxjs/toolkit";
-import { login } from '../pages/Login/Login.slice';
+import { combineReducers } from "@reduxjs/toolkit";
+import { register } from '../pages/Register/Register.slice';
 
 export const rootReducer = combineReducers({
-    login,
+    register,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

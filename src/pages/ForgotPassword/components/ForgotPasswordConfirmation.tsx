@@ -1,29 +1,28 @@
 import React from "react";
+import {
+    useLocation,
+    useNavigate
+} from "react-router-dom";
+
 import Container from "../../../components/Container";
 import TextField from "../../../components/TextField";
 import Button from "../../../components/Button";
 
 import success from '../../../assets/success.png';
-import {useLocation, useNavigate} from "react-router-dom";
 
 type ConfirmationProps = {
     email: string;
 }
 
-export default function Confirmation() {
+export default function ForgotPasswordConfirmation() {
     const navigate = useNavigate();
     const location = useLocation();
     const { email } = location.state as ConfirmationProps;
 
-    const handleText = () => {
-        return "An email has been sent to your rescue email address " +
-            email + ". Follow the directions in the email to reset your password.";
-    }
-
     return (
         <Container>
             <img
-                src={success}
+                src={ success }
                 alt="Success"
                 className="block m-auto w-1/2 mt-5"
             />
@@ -31,12 +30,12 @@ export default function Confirmation() {
                 Success!
             </h1>
             <TextField
-                text={handleText()}
+                text={ `An email has been sent to your rescue email address ${ email }. Follow the directions in the email to reset your password.` }
             />
             <Button
                 label="Done"
                 type="button"
-                onClick={() => navigate("/login")}
+                onClick={ () => navigate("/login") }
             />
         </Container>
     );

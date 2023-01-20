@@ -26,3 +26,11 @@ export type User = {
     roles: Role[],
     markers: Markers[],
 }
+
+export type Error = {
+    localDateTime: string,
+    httpStatusCode: number,
+    httpStatus: string,
+    message: string,
+    path: string,
+}

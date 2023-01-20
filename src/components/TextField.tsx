@@ -7,6 +7,6 @@ type TextFieldProps = {
 
 export default function TextField({ children, text }: TextFieldProps) {
     return (
-        <p className="mx-8 mb-3 text-center">{text} {children}</p>
+        <p className="mx-8 mb-3 text-center">{ text } { children }</p>
     );
 }

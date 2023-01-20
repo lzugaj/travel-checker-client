@@ -7,7 +7,7 @@ type ContainerProps = {
 export default function Container({ children }: ContainerProps) {
     return (
         <div className="flex flex-col">
-            {children}
+            { children }
         </div>
     )
 }

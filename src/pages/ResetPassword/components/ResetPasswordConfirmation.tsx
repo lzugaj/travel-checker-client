@@ -3,7 +3,7 @@ import Container from "../../../components/Container";
 import success from "../../../assets/success.png";
 import TextField from "../../../components/TextField";
 import Button from "../../../components/Button";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function ResetPasswordConfirmation() {
     const navigate = useNavigate();
@@ -11,7 +11,7 @@ export default function ResetPasswordConfirmation() {
     return (
         <Container>
             <img
-                src={success}
+                src={ success }
                 alt="Success"
                 className="block m-auto w-1/2 mt-5"
             />
@@ -24,7 +24,7 @@ export default function ResetPasswordConfirmation() {
             <Button
                 label="Done"
                 type="button"
-                onClick={() => navigate("/login")}
+                onClick={ () => navigate("/login") }
             />
         </Container>
     );
